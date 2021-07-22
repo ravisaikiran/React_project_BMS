@@ -1,4 +1,11 @@
-import React from 'react';
+import React,{useContext,useState,useEffect} from 'react';
+import { useParams } from 'react-router';
+//context
+//slider
+import Slider from 'react-slick';
+import { MovieContext } from '../context/movie.context';
+//axios
+import axios from 'axios';
 //component
 import MovieHero from '../components/MovieHero/MovieHero.component';
 import Cast from '../components/Cast/Cast.component';
@@ -10,6 +17,35 @@ import TempPosters from "../config/TempPosters.config";
 
 import {FaCcVisa,FaApplePay} from "react-icons/fa"
 const Movie = () => {
+  const {id}=useParams();
+  const {movie}=useContext(MovieContext);
+  const [cast,setCast]=useState([]);
+  const [similarMovies,setSimilarMovies]=useState([]);
+  const [recommendedMovies,setRecommendedMovies]=useState([]);
+  
+  useEffect(()=>{
+    const requestCast=async()=>{
+     const getCast=await axios.get(`/movie/${id}/credits`);
+     setCast(getCast.data.cast);
+    };
+    requestCast();
+  },[id]);
+
+  useEffect(()=>{
+    const requestSimilarMovies=async()=>{
+     const getSimilarMovies=await axios.get(`/movie/${id}/similar`);
+     setSimilarMovies(getSimilarMovies.data.results);
+    };
+    requestSimilarMovies();
+  },[id]);
+
+  useEffect(()=>{
+    const requestRecommendedMovies=async()=>{
+     const getRecommendedMovies=await axios.get(`/movie/${id}/recommendations`);
+     setRecommendedMovies(getRecommendedMovies.data.results);
+    };
+    requestRecommendedMovies();
+  },[id]);
     const settings = {
         infinite: false,
         speed: 500,
@@ -42,16 +78,45 @@ const Movie = () => {
           },
         ],
       };
+      const settingsCast = {
+        infinite: false,
+        speed: 500,
+        slidesToShow: 6,
+        slidesToScroll: 4,
+        initialSlide: 0,
+        responsive: [
+          {
+            breakpoint: 1024,
+            settings: {
+              slidesToShow: 4,
+              slidesToScroll: 3,
+              infinite: true,
+            },
+          },
+          {
+            breakpoint: 600,
+            settings: {
+              slidesToShow: 5,
+              slidesToScroll: 2,
+              initialSlide: 2,
+            },
+          },
+          {
+            breakpoint: 480,
+            settings: {
+              slidesToShow: 2,
+              slidesToScroll: 1,
+            },
+          },
+        ],
+      };
     return (
         <>
         <MovieHero />
         <div className="containe px-4 my-12 lg:w-2/3 lg:ml-20">
            <div className="flex flex-col items-start gap-3">
            <h2 className="text-gray-800 font-bold text-2xl">About the movie</h2>
-            <p>Bruce Wayne and Diana Prince try to bring the metahumans of Earth
-            together after the death of Clark Kent. Meanwhile, Darkseid sends
-            Steppenwolf to Earth with an army to subjugate humans.
-            </p>
+            <p>{movie.overview}</p>
            </div>
            <div className="my-4">
                <hr />
@@ -84,26 +149,26 @@ const Movie = () => {
            </div>
           <div className="my-8">
             <h2 className="text-gray-800 font-bold text-2xl mb-3">Cast & Crew</h2>
-            <div className="flex flex-wrap gap-4">
-                <Cast image="https://in.bmscdn.com/iedb/artist/images/website/poster/large/eiza-gonz_lez-1264796-05-02-2019-11-55-05.jpg"
-                castName="Eiza Gonzalez" role="Mayya Simmons"/>
-                <Cast image="https://in.bmscdn.com/iedb/artist/images/website/poster/large/blake-lively-7113-24-10-2016-08-19-24.jpg"
-                castName="Blake Lively" role="Ilane Andrews"/>
-                <Cast image="https://in.bmscdn.com/iedb/artist/images/website/poster/large/demian-bichir-1043508-24-03-2017-17-42-07.jpg"
-                castName="Demian Bichir" role="Walter Simmons"/>
-            </div>
+  
+              <Slider {...settingsCast}>
+                {cast.map((castdata)=>(
+                  <Cast image={`https://image.tmdb.org/t/p/original/${castdata.profile_path}`}
+                  castName={castdata.original_name} role={castdata.character}/>
+                ))}
+              </Slider>
+            
           </div>
           <div className="my-4">
                <hr />
            </div>
           <div className="my-8">
-            <PosterSlider config={settings} images={TempPosters} title="You might also like" isDark={false}/>
+            <PosterSlider config={settings} images={similarMovies} title="You might also like" isDark={false}/>
          </div>
           <div className="my-4">
             <hr />
            </div>
          <div className="my-8">
-            <PosterSlider config={settings} images={TempPosters} title="BMS XCLUSIV" isDark={false}/>
+            <PosterSlider config={settings} images={recommendedMovies} title="BMS XCLUSIV" isDark={false}/>
          </div>
         </div>
         </>
